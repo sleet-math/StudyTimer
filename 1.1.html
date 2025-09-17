@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>StudyTimer — Long Notes (Light/Dark) — i18n</title>
+<style>
+  /* --- 共通変数（ライトデフォルト） --- */
+  :root{
+    --bg: #f7f8fb;
+    --panel: #ffffff;
+    --text: #0b1220;
+    --muted: #5a6272;
+    --brand: #2b6ef6;
+    --accent: #2ed27a;
+    --danger: #ff5b5b;
+    --shadow: 0 6px 18px rgba(15,23,42,0.06);
+    --pill-bg: rgba(43,110,246,0.08);
+    --input-bg: linear-gradient(180deg, #ffffff, #fbfdff);
+  }
+
+  /* --- ダークテーマ上書き（body.dark を付けて切替）--- */
+  body.dark {
+    --bg: #0b1220;
+    --panel: #0f1724;
+    --text: #e6eef8;
+    --muted: #94a3b8;
+    --brand: #4f8cff;
+    --accent: #34d399;
+    --danger: #ef6b6b;
+    --shadow: 0 8px 30px rgba(2,6,23,0.6);
+    --pill-bg: rgba(255,255,255,0.03);
+    --input-bg: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    --dark-border: rgba(255,255,255,0.12);
+    --dark-border-soft: rgba(255,255,255,0.06);
+  }
+
+  /* --- ベース --- */
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{ margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif; background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
+  .wrap{ max-width:1100px; margin:20px auto; padding:16px }
+  header{ display:flex; align-items:center; justify-content:space-between; gap:12px }
+  .logo{ display:flex; gap:12px; align-items:center }
+  .dot{ width:12px;height:12px;border-radius:50%; background:linear-gradient(135deg,var(--brand),var(--accent)); box-shadow:0 4px 12px rgba(0,0,0,0.08) }
+  nav a{ margin-right:8px; padding:8px 12px; border-radius:10px; text-decoration:none; color:var(--text); background:rgba(15,23,42,0.02); }
+  nav a.active{ background:linear-gradient(135deg, rgba(43,110,246,0.08), rgba(46,210,122,0.06)); }
+
+  .card{ background:var(--panel); border-radius:12px; padding:12px; box-shadow:var(--shadow); border:1px solid rgba(15,23,42,0.04); }
+  body.dark .card{ border-color: rgba(255,255,255,0.03); }
+  .tiny{ font-size:12px; color:var(--muted); }
+
+  /* form controls */
+  .controls{ display:flex; gap:8px; align-items:center; margin-top:10px }
+  .action-btn{ background:linear-gradient(135deg,var(--brand),#3b82f6); color:#fff; border:none; padding:8px 12px; border-radius:999px; cursor:pointer }
+  .btn-ghost{ background:transparent; border:1px solid rgba(15,23,42,0.06); color:var(--text); padding:8px 12px; border-radius:10px; cursor:pointer }
+  body.dark .btn-ghost{ border-color: var(--dark-border-soft); color:var(--text); background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); }
+  .btn-danger{ background:linear-gradient(135deg,var(--danger),#ff7b7b); color:#fff; padding:8px 12px; border:none; border-radius:10px; cursor:pointer }
+
+  /* select styling */
+  .subject-select-wrap { display:flex; gap:8px; align-items:center; }
+  select#subjectSelect {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding:10px 36px 10px 12px;
+    border-radius:10px;
+    border:1px solid rgba(15,23,42,0.06);
+    background:var(--input-bg);
+    font-weight:700;
+    min-width:180px;
+    cursor:pointer;
+    color:var(--text);
+  }
+  body.dark select#subjectSelect{ border-color: var(--dark-border); background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), inset 0 -6px 10px rgba(0,0,0,0.2); }
+  .select-caret {
+    position:relative;
+    margin-left:-44px;
+    width:32px;height:32px;
+    display:inline-flex;align-items:center;justify-content:center;
+    pointer-events:none;
+    color:var(--muted);
+  }
+
+  /* --- ノート領域：縦長にする --- */
+  .notes-layout{
+    display:grid;
+    grid-template-columns:300px 1fr;
+    gap:12px;
+    margin-top:12px;
+    height: calc(100vh - 220px);
+    min-height: 320px;
+  }
+
+  .notes-list{
+    height:100%;
+    max-height:none;
+    overflow-y:auto;
+    padding:8px;
+    border-radius:10px;
+    background: linear-gradient(180deg, rgba(15,23,42,0.02), rgba(15,23,42,0.01));
+    border:1px solid rgba(15,23,42,0.03);
+  }
+  body.dark .notes-list{ background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01)); border-color: var(--dark-border-soft); box-shadow: inset 0 1px 0 rgba(255,255,255,0.02); }
+
+  .note-editor{
+    display:flex;
+    flex-direction:column;
+    height:100%;
+    padding:12px;
+    box-sizing:border-box;
+  }
+  .note-editor input{
+    margin-bottom:8px;
+    padding:10px;
+    border-radius:10px;
+    border:1px solid rgba(15,23,42,0.06);
+    background:transparent;
+    color:var(--text);
+    transition:border-color .12s ease, box-shadow .12s ease;
+  }
+  body.dark .note-editor input{
+    border-color: var(--dark-border);
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), inset 0 -6px 10px rgba(0,0,0,0.22);
+  }
+
+  .note-editor textarea{
+    flex:1 1 auto;
+    width:100%;
+    min-height:0;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid rgba(15,23,42,0.06);
+    background:transparent;
+    resize:vertical;
+    font-family:inherit;
+    color:var(--text);
+    overflow:auto;
+    transition:border-color .12s ease, box-shadow .12s ease;
+  }
+  body.dark .note-editor textarea{
+    border-color: var(--dark-border);
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), inset 0 -8px 18px rgba(0,0,0,0.24);
+  }
+
+  .note-item{ display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px; border-radius:8px; cursor:pointer }
+  .note-item.active{ background:linear-gradient(90deg, rgba(43,110,246,0.06), rgba(46,210,122,0.03)); }
+
+  input:focus, textarea:focus, select:focus, .btn-ghost:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(59,110,246,0.08);
+    border-color: var(--brand);
+  }
+  body.dark input:focus, body.dark textarea:focus, body.dark select:focus {
+    box-shadow: 0 0 0 4px rgba(79,140,255,0.08);
+    border-color: var(--brand);
+  }
+
+  .modal{ position:fixed; left:0; top:0; right:0; bottom:0; background:rgba(2,6,23,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; }
+  .modal .panel{ width:90%; max-width:900px; background:var(--panel); border-radius:12px; padding:16px; box-shadow:var(--shadow); }
+  .modal pre{ max-height:70vh; overflow:auto; white-space:pre-wrap; word-break:break-word; }
+
+  .timer-big{ font-family:SFMono-Regular,Menlo,monospace; font-size:28px; margin-top:8px; color:var(--text); }
+  .theme-toggle{ padding:8px;border-radius:10px;border:1px solid rgba(15,23,42,0.06); background:transparent; cursor:pointer }
+  body.dark .theme-toggle{ border-color: var(--dark-border-soft); color:var(--text); }
+
+  /* small responsive tweaks */
+  @media(max-width:880px){ .notes-layout{ grid-template-columns:1fr; height:auto } }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">
+        <div class="dot" aria-hidden="true"></div>
+        <div>
+          <div id="appTitle" style="font-weight:800">StudyTimer</div>
+          <div id="appSubtitle" class="tiny">勉強時間の記録</div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px">
+        <nav>
+          <a href="#timer" id="navTimer">Timer</a>
+          <a href="#notes" id="navNotes">Notepad</a>
+        </nav>
+
+        <!-- 言語切替 -->
+        <select id="langSelect" class="btn-ghost" aria-label="言語選択" style="padding:6px 10px">
+          <option value="ja">日本語</option>
+          <option value="en">English</option>
+        </select>
+
+        <!-- テーマ切替ボタン -->
+        <button id="themeToggle" class="theme-toggle" title="テーマ切替 (Light / Dark)"></button>
+      </div>
+    </header>
+
+    <main id="app"></main>
+
+    <!-- 統合インポート/エクスポート（フッター） -->
+    <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px;">
+      <button id="exportAllBtn" class="btn-ghost" type="button">エクスポート</button>
+      <button id="importBtn" class="btn-ghost" type="button">インポート</button>
+      <input id="importFileInput" type="file" accept="application/json" style="display:none" />
+    </div>
+
+    <footer style="margin-top:12px" class="tiny" id="footerNote">データはブラウザの LocalStorage に保存されます。</footer>
+  </div>
+
+  <!-- プレビュー・モーダル -->
+  <div id="previewModal" class="modal" style="display:none" aria-hidden="true">
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div id="previewTitle" style="font-weight:700">プレビュー</div>
+        <div style="display:flex;gap:8px">
+          <button id="downloadPreviewBtn" class="btn-ghost" type="button">ダウンロード</button>
+          <button id="closePreviewBtn" class="btn-ghost" type="button">閉じる</button>
+        </div>
+      </div>
+      <pre id="previewContent">...</pre>
+    </div>
+  </div>
+
+<script>
+/* ---------- i18n strings ---------- */
+var LOCALE_KEY = 'study_locale_pref';
+var STR = {
+  ja: {
+    appTitle: 'StudyTimer',
+    appSubtitle: '勉強時間の記録',
+    navTimer: 'タイマー',
+    navNotes: 'ノート',
+    export: 'エクスポート',
+    import: 'インポート',
+    preview: 'プレビュー',
+    previewTitle: 'プレビュー',
+    download: 'ダウンロード',
+    close: '閉じる',
+    timerHeading: '⏱ タイマー',
+    timerHint: '科目をドロップダウンから選択して開始。停止でセッションが保存されます。',
+    addSubjectPlaceholder: '科目を追加',
+    addBtn: '追加',
+    start: '開始',
+    pause: '一時停止',
+    resume: '再開',
+    stopSave: '停止して保存',
+    today: '今日',
+    week: '今週',
+    month: '今月',
+    logTitle: '学習ログ',
+    logDeleteConfirm: 'この記録を削除しますか？',
+    noteHeading: '📝 メモ帳',
+    noteSearchPlaceholder: '検索（タイトル / 本文）',
+    newNote: '新規',
+    noteTitlePlaceholder: 'タイトル',
+    noteBodyPlaceholder: 'ここにメモを書く...',
+    lastUpdated: '最終更新',
+    saveNote: '保存',
+    deleteNote: '削除',
+    downloadNote: 'ダウンロード',
+    deleteNoteConfirm: 'このノートを削除しますか？',
+    savedAlert: '保存しました',
+    importedAlert: 'インポートが完了しました',
+    importFailed: 'インポートに失敗しました',
+    invalidFile: '不正なファイルです',
+    storageFooter: 'データはブラウザの LocalStorage に保存されます。',
+    confirmDeleteNote: 'ノートを削除しますか？'
+  },
+  en: {
+    appTitle: 'StudyTimer',
+    appSubtitle: 'Study time tracker',
+    navTimer: 'Timer',
+    navNotes: 'Notepad',
+    export: 'Export',
+    import: 'Import',
+    preview: 'Preview',
+    previewTitle: 'Preview',
+    download: 'Download',
+    close: 'Close',
+    timerHeading: '⏱ Timer',
+    timerHint: 'Select a subject from the dropdown and start. Stop to save the session.',
+    addSubjectPlaceholder: 'Add subject',
+    addBtn: 'Add',
+    start: 'Start',
+    pause: 'Pause',
+    resume: 'Resume',
+    stopSave: 'Stop & Save',
+    today: 'Today',
+    week: 'Week',
+    month: 'Month',
+    logTitle: 'Study Log',
+    logDeleteConfirm: 'Delete this entry?',
+    noteHeading: '📝 Notepad',
+    noteSearchPlaceholder: 'Search (title / body)',
+    newNote: 'New',
+    noteTitlePlaceholder: 'Title',
+    noteBodyPlaceholder: 'Write your note here...',
+    lastUpdated: 'Last updated',
+    saveNote: 'Save',
+    deleteNote: 'Delete',
+    downloadNote: 'Download',
+    deleteNoteConfirm: 'Delete this note?',
+    savedAlert: 'Saved',
+    importedAlert: 'Import completed',
+    importFailed: 'Import failed',
+    invalidFile: 'Invalid file',
+    storageFooter: 'Data is saved to your browser LocalStorage.',
+    confirmDeleteNote: 'Delete this note?'
+  }
+};
+
+/* ---------- Helpers / Storage keys ---------- */
+var THEME_KEY = 'study_theme_pref';
+var LS = { subjects:'study_subjects', sessions:'study_sessions', notes:'study_notes' };
+function load(k,d){ try{ var v=JSON.parse(localStorage.getItem(k)); return (v===null||v===undefined)?d:v }catch(e){ return d } }
+function save(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+function uid(){ return (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : ('id_'+Date.now()+'_'+Math.random().toString(36).slice(2)); }
+function pad(n){ return String(n).padStart(2,'0'); }
+function fmtHMS(sec){ var h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=Math.max(0,sec%60); return pad(h)+':'+pad(m)+':'+pad(s); }
+
+/* ---------- State ---------- */
+var locale = localStorage.getItem(LOCALE_KEY) || 'ja';
+var subjects = load(LS.subjects, ['数学','英語','理科','社会','国語']);
+var sessions = load(LS.sessions, []);
+var notes = load(LS.notes, [{ id: uid(), title: (locale==='ja'?'はじめのノート':'Starter note'), body: (locale==='ja'?'ここはメモです。':'This is a note.'), updatedISO:new Date().toISOString() }]);
+
+/* ---------- DOM refs ---------- */
+var app = document.getElementById('app');
+var navTimer = document.getElementById('navTimer');
+var navNotes = document.getElementById('navNotes');
+var exportAllBtn = document.getElementById('exportAllBtn');
+var importBtn = document.getElementById('importBtn');
+var importFileInput = document.getElementById('importFileInput');
+var previewModal = document.getElementById('previewModal');
+var previewContent = document.getElementById('previewContent');
+var closePreviewBtn = document.getElementById('closePreviewBtn');
+var downloadPreviewBtn = document.getElementById('downloadPreviewBtn');
+var themeToggleBtn = document.getElementById('themeToggle');
+var langSelect = document.getElementById('langSelect');
+var appTitleEl = document.getElementById('appTitle');
+var appSubtitleEl = document.getElementById('appSubtitle');
+var previewTitleEl = document.getElementById('previewTitle');
+var footerNoteEl = document.getElementById('footerNote');
+
+function markButtons(container){ (container||document).querySelectorAll('button').forEach(function(b){ if(!b.hasAttribute('type')) b.setAttribute('type','button'); }); }
+
+/* ---------- i18n apply ---------- */
+function applyLocale(l){
+  locale = l;
+  localStorage.setItem(LOCALE_KEY, l);
+  // header
+  appTitleEl.textContent = STR[l].appTitle;
+  appSubtitleEl.textContent = STR[l].appSubtitle;
+  navTimer.textContent = STR[l].navTimer;
+  navNotes.textContent = STR[l].navNotes;
+  exportAllBtn.textContent = STR[l].export;
+  importBtn.textContent = STR[l].import;
+  previewTitleEl.textContent = STR[l].previewTitle;
+  downloadPreviewBtn.textContent = STR[l].download;
+  closePreviewBtn.textContent = STR[l].close;
+  footerNoteEl.textContent = STR[l].storageFooter;
+
+  // update current page UI by re-rendering route
+  route();
+}
+langSelect.value = locale;
+langSelect.addEventListener('change', function(){ applyLocale(langSelect.value); });
+
+/* ---------- Theme ---------- */
+function applyTheme(theme){
+  if(theme === 'dark'){ document.body.classList.add('dark'); themeToggleBtn.textContent = '🌙'; themeToggleBtn.title = 'ダークテーマ（有効）'; }
+  else { document.body.classList.remove('dark'); themeToggleBtn.textContent = '☀️'; themeToggleBtn.title = 'ライトテーマ（有効）'; }
+  localStorage.setItem(THEME_KEY, theme);
+}
+(function initTheme(){ var pref = localStorage.getItem(THEME_KEY) || 'light'; applyTheme(pref); })();
+themeToggleBtn.addEventListener('click', function(){ var current = document.body.classList.contains('dark') ? 'dark' : 'light'; applyTheme(current === 'dark' ? 'light' : 'dark'); });
+
+/* ---------- Export / Import ---------- */
+function buildExportPayload(){ return { exportedAt:new Date().toISOString(), subjects: subjects, sessions: sessions, notes: notes }; }
+function downloadJson(filename, text){
+  var blob = new Blob([text], { type:'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+function exportAllData(){ var payload = buildExportPayload(); downloadJson('study_data_export_' + (new Date().toISOString().slice(0,10)) + '.json', JSON.stringify(payload, null, 2)); }
+function importAllDataFromFile(file){
+  var reader = new FileReader();
+  reader.onload = function(){
+    try{
+      var d = JSON.parse(reader.result);
+      if(!d){ alert(STR[locale].invalidFile); return; }
+      if(Array.isArray(d.subjects)){ d.subjects.forEach(function(s){ if(subjects.indexOf(s) === -1) subjects.unshift(s); }); save(LS.subjects, subjects); }
+      if(Array.isArray(d.sessions)){ var map = {}; sessions.forEach(function(s){ map[s.id] = s; }); d.sessions.forEach(function(s){ if(!s.id) s.id = uid(); map[s.id] = s; }); sessions = Object.keys(map).map(function(k){ return map[k]; }); sessions.sort(function(a,b){ return new Date(b.startISO) - new Date(a.startISO); }); save(LS.sessions, sessions); }
+      if(Array.isArray(d.notes)){ var map2 = {}; notes.forEach(function(n){ map2[n.id] = n; }); d.notes.forEach(function(n){ if(!n.id) n.id = uid(); map2[n.id] = n; }); notes = Object.keys(map2).map(function(k){ return map2[k]; }); notes.sort(function(a,b){ return new Date(b.updatedISO) - new Date(a.updatedISO); }); save(LS.notes, notes); }
+      alert(STR[locale].importedAlert);
+      route();
+    } catch(e){ console.error(e); alert(STR[locale].importFailed); }
+  };
+  reader.readAsText(file);
+}
+exportAllBtn.addEventListener('click', exportAllData);
+importBtn.addEventListener('click', function(){ importFileInput.click(); });
+importFileInput.addEventListener('change', function(ev){ var f = ev.target.files && ev.target.files[0]; if(f) importAllDataFromFile(f); importFileInput.value=''; });
+
+/* ---------- Pages ---------- */
+function renderTimerPage(){
+  document.title = STR[locale].appTitle + ' — ' + STR[locale].navTimer;
+  navTimer.classList.add('active'); navNotes.classList.remove('active');
+
+  app.innerHTML = ''
+    + '<section class="card">'
+    + '<h2>' + STR[locale].timerHeading + '</h2>'
+    + '<p class="tiny">' + STR[locale].timerHint + '</p>'
+    + '<div style="margin-top:12px;display:flex;align-items:center;gap:12px;">'
+    +   '<div class="subject-select-wrap">'
+    +     '<select id="subjectSelect" aria-label="' + STR[locale].navTimer + '"></select>'
+    +     '<span class="select-caret">▾</span>'
+    +     '<input id="newSubjectInput" type="text" placeholder="' + STR[locale].addSubjectPlaceholder + '" style="padding:8px;border-radius:8px;border:1px solid rgba(15,23,42,0.06);background:transparent;color:inherit" />'
+    +     '<button id="addSubjectBtn" class="btn-ghost">' + STR[locale].addBtn + '</button>'
+    +   '</div>'
+    + '</div>'
+    + '<div class="controls">'
+    +   '<button id="startBtn" class="action-btn">' + STR[locale].start + '</button>'
+    +   '<button id="pauseBtn" class="btn-ghost" disabled>' + STR[locale].pause + '</button>'
+    +   '<button id="stopBtn" class="btn-danger" disabled>' + STR[locale].stopSave + '</button>'
+    + '</div>'
+    + '<div style="margin-top:18px" class="timer-big" id="timerDisplay">00:00:00</div>'
+    + '<div style="margin-top:12px;display:flex;gap:12px;">'
+    +   '<div class="card" style="flex:1"><div class="tiny">' + STR[locale].today + '</div><div id="todayTotal">0:00</div></div>'
+    +   '<div class="card" style="flex:1"><div class="tiny">' + STR[locale].week + '</div><div id="weekTotal">0:00</div></div>'
+    +   '<div class="card" style="flex:1"><div class="tiny">' + STR[locale].month + '</div><div id="monthTotal">0:00</div></div>'
+    + '</div>'
+    + '<div style="margin-top:16px"><h3>📒 ' + STR[locale].logTitle + '</h3><div class="card" style="margin-top:8px"><table id="logTable"><thead><tr><th>' + (locale==='ja'?'日付':'Date') + '</th><th>' + (locale==='ja'?'開始':'Start') + '</th><th>' + (locale==='ja'?'終了':'End') + '</th><th>' + (locale==='ja'?'科目':'Subject') + '</th><th>' + (locale==='ja'?'時間':'Duration') + '</th><th></th></tr></thead><tbody></tbody></table></div></div>'
+    + '</section>';
+
+  markButtons(app);
+
+  var subjectSelect = document.getElementById('subjectSelect');
+  var newSubjectInput = document.getElementById('newSubjectInput');
+  var addSubjectBtn = document.getElementById('addSubjectBtn');
+  var startBtn = document.getElementById('startBtn');
+  var pauseBtn = document.getElementById('pauseBtn');
+  var stopBtn = document.getElementById('stopBtn');
+  var timerDisplay = document.getElementById('timerDisplay');
+  var logTableBody = document.querySelector('#logTable tbody');
+
+  function populateSubjectSelect(){
+    subjectSelect.innerHTML = '';
+    for(var i=0;i<subjects.length;i++){
+      var opt = document.createElement('option');
+      opt.value = subjects[i];
+      opt.textContent = subjects[i];
+      subjectSelect.appendChild(opt);
+    }
+    if(subjects.length) subjectSelect.value = subjects[0];
+  }
+  populateSubjectSelect();
+
+  var currentSubject = subjectSelect.value || subjects[0] || '';
+  subjectSelect.addEventListener('change', function(){ currentSubject = subjectSelect.value; });
+
+  addSubjectBtn.addEventListener('click', function(){
+    var v = (newSubjectInput.value||'').trim();
+    if(!v) return;
+    if(subjects.indexOf(v) !== -1){ alert(locale==='ja'?'既に存在します':'Already exists'); return; }
+    subjects.unshift(v);
+    save(LS.subjects, subjects);
+    newSubjectInput.value = '';
+    populateSubjectSelect();
+    subjectSelect.value = v;
+    currentSubject = v;
+  });
+
+  // timer logic
+  var ticking=false, paused=false, startAt=null, accSec=0, tickHandle=null;
+  function setButtons(){ startBtn.disabled=ticking; pauseBtn.disabled=!ticking; stopBtn.disabled=!ticking; pauseBtn.textContent = paused ? STR[locale].resume : STR[locale].pause; }
+  function tick(){ var now=new Date(); var elapsed = Math.floor((now - startAt)/1000) + accSec; var td = document.getElementById('timerDisplay'); if(td) td.textContent = fmtHMS(elapsed); }
+
+  startBtn.addEventListener('click', function(){
+    currentSubject = subjectSelect.value;
+    if(!currentSubject){ alert(locale==='ja'?'科目を選択してください':'Please select a subject'); return; }
+    ticking=true; paused=false; startAt=new Date(); accSec=0; clearInterval(tickHandle); tickHandle=setInterval(tick,1000); tick(); setButtons();
+  });
+  pauseBtn.addEventListener('click', function(){
+    if(!ticking) return;
+    if(!paused){ var now=new Date(); accSec += Math.floor((now - startAt)/1000); paused=true; clearInterval(tickHandle); }
+    else { startAt=new Date(); paused=false; tick(); tickHandle=setInterval(tick,1000); }
+    setButtons();
+  });
+  stopBtn.addEventListener('click', function(){
+    if(!ticking) return;
+    var end = new Date();
+    var seconds = Math.max(1, paused ? accSec : accSec + Math.floor((end - startAt)/1000));
+    var startISO = new Date(end - seconds*1000).toISOString();
+    var entry = { id: uid(), subject: currentSubject, seconds: seconds, startISO: startISO, endISO: end.toISOString(), dateKey: startISO.slice(0,10) };
+    sessions.push(entry);
+    save(LS.sessions, sessions);
+    ticking=false; paused=false; startAt=null; accSec=0; clearInterval(tickHandle); timerDisplay.textContent='00:00:00'; setButtons(); updateKpis(); renderLog();
+    alert(locale==='ja'?'記録しました':'Saved');
+  });
+
+  // KPIs and log
+  function sumToday(){ var today=new Date().toISOString().slice(0,10); var t=0; for(var i=0;i<sessions.length;i++){ if(sessions[i].dateKey === today) t+=sessions[i].seconds; } return t; }
+  function sumLastNDays(n){ var now=new Date(); var cutoff=new Date(now.getFullYear(), now.getMonth(), now.getDate()-n+1); var t=0; for(var i=0;i<sessions.length;i++){ if(new Date(sessions[i].dateKey) >= cutoff) t+=sessions[i].seconds; } return t; }
+  function sumThisMonth(){ var now=new Date(); var ym = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0'); var t=0; for(var i=0;i<sessions.length;i++){ if(String(sessions[i].dateKey).indexOf(ym)===0) t+=sessions[i].seconds; } return t; }
+  function fmtHM(sec){ var h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60); return h+':'+pad(m); }
+  function updateKpis(){ var td=document.getElementById('todayTotal'); if(td) td.textContent = fmtHM(sumToday()); var wd=document.getElementById('weekTotal'); if(wd) wd.textContent = fmtHM(sumLastNDays(7)); var md=document.getElementById('monthTotal'); if(md) md.textContent = fmtHM(sumThisMonth()); }
+
+  function renderLog(){
+    logTableBody.innerHTML = '';
+    var rows = sessions.slice().sort(function(a,b){ return new Date(b.startISO) - new Date(a.startISO); });
+    for(var i=0;i<rows.length;i++){
+      (function(e){
+        var dStart = new Date(e.startISO), dEnd = new Date(e.endISO);
+        var tr = document.createElement('tr');
+        function fmtTime(d){ return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+        function fmtDate(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+        tr.innerHTML = '<td>' + fmtDate(dStart) + '</td><td>' + fmtTime(dStart) + '</td><td>' + fmtTime(dEnd) + '</td><td>' + (e.subject||'') + '</td><td>' + fmtHMS(e.seconds) + '</td><td><button class="btn-ghost" type="button" data-id="' + e.id + '">🗑 ' + (locale==='ja'?'削除':'Delete') + '</button></td>';
+        var del = tr.querySelector('button');
+        del.addEventListener('click', function(){
+          if(!confirm(STR[locale].logDeleteConfirm)) return;
+          sessions = sessions.filter(function(s){ return s.id !== e.id; });
+          save(LS.sessions, sessions);
+          renderLog(); updateKpis();
+        });
+        logTableBody.appendChild(tr);
+      })(rows[i]);
+    }
+  }
+
+  updateKpis(); renderLog(); setButtons();
+}
+
+function renderNotesPage(){
+  document.title = STR[locale].appTitle + ' — ' + STR[locale].navNotes;
+  navTimer.classList.remove('active'); navNotes.classList.add('active');
+
+  app.innerHTML = ''
+    + '<section class="card">'
+    + '<h2>' + STR[locale].noteHeading + '</h2>'
+    + '<div class="notes-layout">'
+    + '  <div>'
+    + '    <div style="display:flex;gap:8px;margin-bottom:8px"><input id="noteSearch" placeholder="' + STR[locale].noteSearchPlaceholder + '" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(15,23,42,0.06);background:transparent;color:inherit" /><button id="newNoteBtn" class="btn-ghost">' + STR[locale].newNote + '</button></div>'
+    + '    <div class="notes-list" id="notesList"></div>'
+    + '  </div>'
+    + '  <div class="note-editor card">'
+    + '    <input id="noteTitle" placeholder="' + STR[locale].noteTitlePlaceholder + '" aria-label="ノートタイトル" />'
+    + '    <textarea id="noteBody" placeholder="' + STR[locale].noteBodyPlaceholder + '"></textarea>'
+    + '    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><div class="tiny">' + STR[locale].lastUpdated + ': <span id="noteUpdated">—</span></div><div style="display:flex;gap:8px"><button id="saveNoteBtn" class="btn-ghost">' + STR[locale].saveNote + '</button><button id="previewNoteBtn" class="btn-ghost">' + STR[locale].preview + '</button><button id="downloadNoteBtn" class="btn-ghost">' + STR[locale].downloadNote + '</button><button id="deleteNoteBtn" class="btn-danger">' + STR[locale].deleteNote + '</button></div></div>'
+    + '  </div>'
+    + '</div>'
+    + '</section>';
+
+  markButtons(app);
+
+  var notesListEl = document.getElementById('notesList'); var noteTitleEl = document.getElementById('noteTitle'); var noteBodyEl = document.getElementById('noteBody'); var noteUpdatedEl = document.getElementById('noteUpdated'); var newNoteBtn = document.getElementById('newNoteBtn'); var saveNoteBtn = document.getElementById('saveNoteBtn'); var deleteNoteBtn = document.getElementById('deleteNoteBtn'); var downloadNoteBtn = document.getElementById('downloadNoteBtn'); var previewNoteBtn = document.getElementById('previewNoteBtn'); var noteSearch = document.getElementById('noteSearch');
+
+  var currentNoteId = notes.length ? notes[0].id : null; var saveTimer = null;
+  function saveNotesToStorage(){ save(LS.notes, notes); }
+
+  function renderNotesList(filter){ filter = (filter||'').toLowerCase(); notesListEl.innerHTML=''; var sorted = notes.slice().sort(function(a,b){ return new Date(b.updatedISO) - new Date(a.updatedISO); }); for(var i=0;i<sorted.length;i++){ (function(n){ if(filter){ var hay = (n.title + '\n' + n.body).toLowerCase(); if(hay.indexOf(filter)===-1) return; } var item = document.createElement('div'); item.className = 'note-item' + (n.id===currentNoteId ? ' active' : ''); item.setAttribute('role','listitem'); var meta = document.createElement('div'); meta.className = 'note-meta'; var t = document.createElement('div'); t.className='note-title'; t.textContent = n.title || (locale==='ja'?'(タイトルなし)':'(Untitled)'); var u = document.createElement('div'); u.className='note-upd'; u.textContent = (new Date(n.updatedISO)).toLocaleString(); meta.appendChild(t); meta.appendChild(u); var right = document.createElement('div'); right.style.display='flex'; right.style.gap='6px'; var openBtn = document.createElement('button'); openBtn.className='btn-ghost'; openBtn.textContent=(locale==='ja'?'開く':'Open'); openBtn.addEventListener('click', function(){ selectNote(n.id); }); var delBtn = document.createElement('button'); delBtn.className='btn-ghost'; delBtn.textContent='×'; delBtn.addEventListener('click', function(ev){ ev.stopPropagation(); if(!confirm(STR[locale].deleteNoteConfirm)) return; notes = notes.filter(function(x){ return x.id !== n.id; }); if(currentNoteId === n.id) currentNoteId = notes.length ? notes[0].id : null; saveNotesToStorage(); renderNotesList(noteSearch.value); renderNoteEditor(); }); right.appendChild(openBtn); right.appendChild(delBtn); item.appendChild(meta); item.appendChild(right); item.addEventListener('click', function(){ selectNote(n.id); }); notesListEl.appendChild(item); })(sorted[i]); } }
+
+  function selectNote(id){ currentNoteId = id; renderNotesList(noteSearch.value); renderNoteEditor(); }
+  function renderNoteEditor(){ var n = notes.find(function(x){ return x.id===currentNoteId; }); if(!n){ noteTitleEl.value=''; noteBodyEl.value=''; noteUpdatedEl.textContent='—'; return; } noteTitleEl.value = n.title || ''; noteBodyEl.value = n.body || ''; noteUpdatedEl.textContent = new Date(n.updatedISO).toLocaleString(); }
+  function createNewNote(){ var n = { id: uid(), title: (locale==='ja'?'新規ノート':'New note'), body:'', updatedISO: new Date().toISOString() }; notes.unshift(n); currentNoteId = n.id; saveNotesToStorage(); renderNotesList(); renderNoteEditor(); }
+  function saveCurrentNote(){ if(!currentNoteId) return; var n = notes.find(function(x){ return x.id === currentNoteId; }); if(!n) return; n.title = (noteTitleEl.value||'').trim(); n.body = noteBodyEl.value || ''; n.updatedISO = new Date().toISOString(); saveNotesToStorage(); renderNotesList(noteSearch.value); renderNoteEditor(); }
+  function deleteCurrentNote(){ if(!currentNoteId) return; if(!confirm(STR[locale].deleteNoteConfirm)) return; notes = notes.filter(function(x){ return x.id !== currentNoteId; }); currentNoteId = notes.length ? notes[0].id : null; saveNotesToStorage(); renderNotesList(noteSearch.value); renderNoteEditor(); }
+  function downloadCurrentNote(){ var n = notes.find(function(x){ return x.id === currentNoteId; }); if(!n) return; var blob = new Blob([n.title + '\n\n' + n.body], {type:'text/plain'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = (n.title||'note') + '.txt'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(url); },1000); }
+  function scheduleAutosave(){ if(saveTimer) clearTimeout(saveTimer); saveTimer = setTimeout(function(){ saveCurrentNote(); }, 1000); }
+
+  newNoteBtn.addEventListener('click', createNewNote);
+  saveNoteBtn.addEventListener('click', function(){ saveCurrentNote(); alert(STR[locale].savedAlert); });
+  deleteNoteBtn.addEventListener('click', deleteCurrentNote);
+  downloadNoteBtn.addEventListener('click', downloadCurrentNote);
+  previewNoteBtn.addEventListener('click', function(){ var n = notes.find(function(x){ return x.id===currentNoteId; }); if(!n) return alert(locale==='ja'?'ノートが選択されていません':'No note selected'); previewContent.textContent = '--- ' + (n.title|| (locale==='ja'?'(タイトル無し)':'(Untitled)')) + ' ---\n\n' + n.body; previewModal.style.display='flex'; previewModal.setAttribute('aria-hidden','false'); downloadPreviewBtn.onclick = function(){ var data = previewContent.textContent; var blob = new Blob([data], {type:'text/plain'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = (n.title||'note') + '.txt'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(url); },1000); }; });
+  noteSearch.addEventListener('input', function(){ renderNotesList(noteSearch.value); });
+  noteTitleEl.addEventListener('input', scheduleAutosave);
+  noteBodyEl.addEventListener('input', scheduleAutosave);
+  window.addEventListener('keydown', function(e){ if((e.ctrlKey||e.metaKey)&& e.key.toLowerCase()==='s'){ e.preventDefault(); saveCurrentNote(); alert(STR[locale].savedAlert); } });
+
+  renderNotesList(); renderNoteEditor();
+}
+
+/* ---------- Router ---------- */
+function route(){ var h = (location.hash || '#timer').replace('#',''); if(h === 'notes') renderNotesPage(); else renderTimerPage(); }
+window.addEventListener('hashchange', route);
+document.getElementById('navTimer').addEventListener('click', function(e){ e.preventDefault(); location.hash='timer'; route(); });
+document.getElementById('navNotes').addEventListener('click', function(e){ e.preventDefault(); location.hash='notes'; route(); });
+
+/* ---------- Modal close ---------- */
+previewModal.addEventListener('click', function(ev){ if(ev.target === previewModal){ previewModal.style.display='none'; previewModal.setAttribute('aria-hidden','true'); } });
+closePreviewBtn.addEventListener('click', function(){ previewModal.style.display='none'; previewModal.setAttribute('aria-hidden','true'); });
+
+/* ---------- Init ---------- */
+(function init(){
+  // set lang select and strings
+  langSelect.value = locale;
+  applyLocale(locale);
+  if(!location.hash) location.hash = 'timer';
+  route();
+})();
+</script>
+</body>
+</html>
+
