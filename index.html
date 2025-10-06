@@ -35,6 +35,19 @@
   .notes-layout{ display:grid; grid-template-columns:300px 1fr; gap:12px; margin-top:12px; height: calc(100vh - 220px); min-height: 320px; }
   @media(max-width:880px){ .notes-layout{ grid-template-columns:1fr; height:auto } }
   .notes-list{ height:100%; overflow-y:auto; padding:8px; border-radius:10px; background: linear-gradient(180deg, rgba(15,23,42,0.02), rgba(15,23,42,0.01)); border:1px solid var(--card-border); }
+  /* note item styles to make selection obvious */
+  .note-item{ display:flex; justify-content:space-between; align-items:center; gap:8px; padding:10px; border-radius:8px; margin-bottom:8px; cursor:pointer; border:1px solid transparent; transition: background 200ms ease, transform 160ms ease, box-shadow 200ms ease; }
+  .note-item:hover{ transform:translateY(-2px); box-shadow:var(--shadow); }
+  .note-item.active{ background:linear-gradient(90deg, rgba(43,110,246,0.06), rgba(46,210,122,0.03)); border-color:rgba(43,110,246,0.12); box-shadow:0 6px 18px rgba(43,110,246,0.06); }
+  .note-item .note-meta{ flex:1; min-width:0 }
+  .note-item .note-title{ font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+  .note-item .note-upd{ font-size:12px; color:var(--muted); }
+  .note-item button{ flex:0 0 auto }
+  /* small focus & animation when switching */
+  .note-item:focus{ outline:none; box-shadow:0 0 0 4px rgba(59,110,246,0.12); }
+  .active-anim{ animation: pulseHighlight 600ms ease; }
+  @keyframes pulseHighlight{ 0%{ box-shadow:0 0 0 0 rgba(43,110,246,0.2); } 60%{ box-shadow:0 8px 24px rgba(43,110,246,0.12); } 100%{ box-shadow:none; } }
+
   .note-editor{ display:flex; flex-direction:column; height:100%; padding:12px; box-sizing:border-box; border:1px solid var(--card-border); }
   .note-editor input{ margin-bottom:8px; padding:10px; border-radius:10px; border:1px solid var(--input-border); background:transparent; color:var(--text);} 
   .note-editor textarea{ flex:1 1 auto; width:100%; min-height:0; padding:12px; border-radius:10px; border:1px solid var(--input-border); background:transparent; resize:vertical; color:var(--text); }
@@ -115,7 +128,7 @@
   </div>
 
 <script>
-/* ========= StudyTimer — Final (Best Record) ========= */
+/* ========= StudyTimer — Final (Best Record) with subject delete + note highlight improvements ========= */
 
 /* i18n */
 const STR = {
@@ -125,7 +138,9 @@ const STR = {
     timerHeading: '⏱ タイマー', timerHint: '科目をドロップダウンから選択して開始。停止でセッションが保存されます。', addSubjectPlaceholder: '科目を追加', addBtn: '追加', start: '開始', pause: '一時停止', resume: '再開', stopSave: '停止して保存',
     today: '今日', week: '今週', month: '今月', logTitle: '学習ログ', logDeleteConfirm: 'この記録を削除しますか？',
     noteHeading: '📝 メモ帳', noteSearchPlaceholder: '検索（タイトル / 本文）', newNote: '新規', noteTitlePlaceholder: 'タイトル', noteBodyPlaceholder: 'ここにメモを書く...', lastUpdated: '最終更新', saveNote: '保存', deleteNote: '削除', downloadNote: 'ダウンロード', deleteNoteConfirm: 'このノートを削除しますか？', savedAlert: '保存しました', importedAlert: 'インポートが完了しました', importFailed: 'インポートに失敗しました', invalidFile: '不正なファイルです', storageFooter: 'データはブラウザの LocalStorage に保存されます。',
-    statsHeading: '📊 統計', statsBySubject: '科目別学習時間', statsDay: '前日比', statsWeek: '先週比', statsMonth: '先月比', statsNoData: 'セッションデータがまだありません', streakLabel: '連続日数', timeframeLabel: '集計期間'
+    statsHeading: '📊 統計', statsBySubject: '科目別学習時間', statsDay: '前日比', statsWeek: '先週比', statsMonth: '先月比', statsNoData: 'セッションデータがまだありません', streakLabel: '連続日数', timeframeLabel: '集計期間',
+    subjectDeleteConfirmWithCount: '「{subj}」には {count} 件の記録があります。科目だけを削除しますか？（記録は残ります）',
+    subjectDeleteConfirm: '「{subj}」を削除しますか？'
   },
   en: {
     appTitle: 'StudyTimer', appSubtitle: 'Study time tracker', navTimer: 'Timer', navNotes: 'Notepad', navStats: 'Statistics',
@@ -133,7 +148,9 @@ const STR = {
     timerHeading: '⏱ Timer', timerHint: 'Select a subject from the dropdown and start. Stop to save the session.', addSubjectPlaceholder: 'Add subject', addBtn: 'Add', start: 'Start', pause: 'Pause', resume: 'Resume', stopSave: 'Stop & Save',
     today: 'Today', week: 'Week', month: 'Month', logTitle: 'Study Log',
     noteHeading: '📝 Notepad', noteSearchPlaceholder: 'Search (title / body)', newNote: 'New', noteTitlePlaceholder: 'Title', noteBodyPlaceholder: 'Write your note here...', lastUpdated: 'Last updated', saveNote: 'Save', deleteNote: 'Delete', downloadNote: 'Download', deleteNoteConfirm: 'Delete this note?', savedAlert: 'Saved', importedAlert: 'Import completed', importFailed: 'Import failed', invalidFile: 'Invalid file', storageFooter: 'Data is saved to your browser LocalStorage.',
-    statsHeading: '📊 Statistics', statsBySubject: 'Study time by subject', statsDay: 'Day vs Yesterday', statsWeek: 'Last 7 days vs prev 7 days', statsMonth: 'Month vs prev month', statsNoData: 'No session data yet', streakLabel: 'Streak', timeframeLabel: 'Timeframe'
+    statsHeading: '📊 Statistics', statsBySubject: 'Study time by subject', statsDay: 'Day vs Yesterday', statsWeek: 'Last 7 days vs prev 7 days', statsMonth: 'Month vs prev month', statsNoData: 'No session data yet', streakLabel: 'Streak', timeframeLabel: 'Timeframe',
+    subjectDeleteConfirmWithCount: 'There are {count} sessions for \"{subj}\". Remove the subject only? (sessions will remain)',
+    subjectDeleteConfirm: 'Remove \"{subj}\"?'
   }
 };
 
@@ -374,7 +391,7 @@ function drawPie(canvas, dataMap){
   return { legend, total };
 }
 
-/* Timer page (unchanged except for using calcComparisons/updateHeaderStreak) */
+/* Timer page (modified: add remove-subject button + logic) */
 function renderTimerPage(){
   document.title = `${STR[locale].appTitle} — ${STR[locale].navTimer}`;
   navTimer.classList.add('active'); navNotes.classList.remove('active'); navStats.classList.remove('active');
@@ -389,6 +406,7 @@ function renderTimerPage(){
           <span class="select-caret">▾</span>
           <input id="newSubjectInput" type="text" placeholder="${STR[locale].addSubjectPlaceholder}" style="padding:8px;border-radius:8px;border:1px solid var(--input-border);background:transparent;color:inherit" />
           <button id="addSubjectBtn" class="btn-ghost">${STR[locale].addBtn}</button>
+          <button id="removeSubjectBtn" class="btn-ghost" title="科目を削除">削除</button>
         </div>
       </div>
       <div class="controls">
@@ -416,6 +434,7 @@ function renderTimerPage(){
   const subjectSelect = document.getElementById('subjectSelect');
   const newSubjectInput = document.getElementById('newSubjectInput');
   const addSubjectBtn = document.getElementById('addSubjectBtn');
+  const removeSubjectBtn = document.getElementById('removeSubjectBtn');
   const startBtn = document.getElementById('startBtn');
   const pauseBtn = document.getElementById('pauseBtn');
   const stopBtn = document.getElementById('stopBtn');
@@ -425,7 +444,17 @@ function renderTimerPage(){
   const monthTotalEl = document.getElementById('monthTotal');
   const logTableBody = document.querySelector('#logTable tbody');
 
-  function populateSubjectSelect(){ subjectSelect.innerHTML = ''; subjects.forEach(s=>{ const opt = document.createElement('option'); opt.value=s; opt.textContent=s; subjectSelect.appendChild(opt); }); if(subjects.length) subjectSelect.value = subjects[0]; }
+  function populateSubjectSelect(){
+    subjectSelect.innerHTML = '';
+    if(subjects.length === 0){
+      const opt = document.createElement('option'); opt.value = ''; opt.textContent = locale==='ja' ? '(科目なし)' : '(No subjects)'; opt.disabled = true; subjectSelect.appendChild(opt);
+      removeSubjectBtn.disabled = true;
+    } else {
+      subjects.forEach(s=>{ const opt = document.createElement('option'); opt.value=s; opt.textContent=s; subjectSelect.appendChild(opt); });
+      subjectSelect.value = subjects[0];
+      removeSubjectBtn.disabled = false;
+    }
+  }
   populateSubjectSelect();
 
   let currentSubject = subjectSelect.value || subjects[0] || '';
@@ -435,6 +464,28 @@ function renderTimerPage(){
     const v = (newSubjectInput.value||'').trim(); if(!v) return;
     if(subjects.includes(v)){ alert(locale==='ja'?'既に存在します':'Already exists'); return; }
     subjects.unshift(v); saveJSON(LS_KEYS.subjects, subjects); newSubjectInput.value=''; populateSubjectSelect(); currentSubject = v;
+  });
+
+  // New: remove subject button behavior
+  removeSubjectBtn.addEventListener('click', ()=>{
+    const subj = subjectSelect.value;
+    if(!subj){ alert(locale==='ja'?'削除する科目が選択されていません':'No subject selected to remove'); return; }
+    const related = sessions.filter(s=> s.subject === subj).length;
+    let message = '';
+    if(related > 0){
+      const tmpl = STR[locale].subjectDeleteConfirmWithCount || STR[locale].subjectDeleteConfirm;
+      message = tmpl.replace('{subj}', subj).replace('{count}', related);
+    } else {
+      message = (STR[locale].subjectDeleteConfirm || 'Remove "{subj}"?').replace('{subj}', subj);
+    }
+    if(!confirm(message)) return;
+    subjects = subjects.filter(s=> s !== subj);
+    saveJSON(LS_KEYS.subjects, subjects);
+    populateSubjectSelect();
+    currentSubject = subjectSelect.value || '';
+    // we leave sessions intact (they will show the removed subject in logs) — this avoids accidental data loss.
+    updateKpis(); renderLog(); updateHeaderStreak();
+    alert(locale==='ja'?'削除しました':'Removed');
   });
 
   let ticking=false, paused=false, startAt=null, accSec=0, tickHandle=null;
@@ -490,7 +541,7 @@ function renderTimerPage(){
   updateKpis(); renderLog(); setButtons(); updateHeaderStreak();
 }
 
-/* Notes page (unchanged) */
+/* Notes page (with improved selection feedback) */
 function renderNotesPage(){
   document.title = `${STR[locale].appTitle} — ${STR[locale].navNotes}`;
   navTimer.classList.remove('active'); navNotes.classList.add('active'); navStats.classList.remove('active');
@@ -552,6 +603,8 @@ function renderNotesPage(){
       const item = document.createElement('div');
       item.className = 'note-item' + (n.id === currentNoteId ? ' active' : '');
       item.setAttribute('role','listitem');
+      item.setAttribute('data-note-id', n.id);
+      item.tabIndex = 0;
       const meta = document.createElement('div'); meta.className = 'note-meta';
       const t = document.createElement('div'); t.className = 'note-title'; t.textContent = n.title || (locale==='ja'?'(タイトルなし)':'(Untitled)');
       const u = document.createElement('div'); u.className = 'note-upd'; u.textContent = (new Date(n.updatedISO)).toLocaleString();
@@ -564,11 +617,22 @@ function renderNotesPage(){
       right.appendChild(openBtn); right.appendChild(delBtn);
       item.appendChild(meta); item.appendChild(right);
       item.addEventListener('click', ()=> selectNote(n.id));
+      // keyboard support: Enter opens
+      item.addEventListener('keydown', (e)=> { if(e.key === 'Enter'){ selectNote(n.id); e.preventDefault(); } });
       notesListEl.appendChild(item);
     });
   }
 
-  function selectNote(id){ currentNoteId = id; renderNotesList(noteSearch.value); renderNoteEditor(); }
+  function selectNote(id){ currentNoteId = id; renderNotesList(noteSearch.value); renderNoteEditor();
+    // visual feedback: scroll into view, focus and pulse animate the selected item
+    setTimeout(()=>{
+      try{
+        const el = notesListEl.querySelector(`[data-note-id="${id}"]`);
+        if(el){ el.scrollIntoView({behavior:'smooth', block:'center'}); el.classList.add('active-anim'); el.focus(); setTimeout(()=> el.classList.remove('active-anim'), 700); }
+      }catch(e){/* ignore */}
+    }, 30);
+  }
+
   function renderNoteEditor(){
     const n = notes.find(x=> x.id === currentNoteId);
     if(!n){ noteTitleEl.value = ''; noteBodyEl.value=''; noteUpdatedEl.textContent='—'; return; }
@@ -730,7 +794,7 @@ closePreviewBtn.addEventListener('click', ()=> { previewModal.style.display='non
   if(!location.hash) location.hash = getLastPage() || 'timer';
   route();
   updateHeaderStreak();
-  console.log('StudyTimer with Best Record initialized');
+  console.log('StudyTimer with subject delete and improved note selection initialized');
 })();
 </script>
 </body>
